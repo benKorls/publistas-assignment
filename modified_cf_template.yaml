@@ -1,0 +1,516 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Publitas AWS CloudFormation Template for custom domain CloudFront distribution
+  setup
+Resources:
+  CustomResource:
+    Type: 'Custom::LambdaInvoker'
+    DependsOn:
+      - CFDistribution
+    Properties:
+      ServiceToken: !Ref LambdaArn
+      Region: AWS::Region
+      GroupId: !Ref groupId
+      CustomDomain: !Ref customerDomain
+  CFDistribution:
+    Type: 'AWS::CloudFront::Distribution'
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref customerDomain
+        DefaultRootObject: ''
+        Origins:
+          - Id: s3
+            DomainName: production-revolution-publitas-com.s3.amazonaws.com
+            OriginPath: ''
+            S3OriginConfig:
+              OriginAccessIdentity: origin-access-identity/cloudfront/E6EJSK3IGYZMB
+          - Id: publitas.github.io
+            DomainName: publitas.github.io
+            OriginPath: ''
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1
+                - TLSv1.1
+                - TLSv1.2
+              OriginReadTimeout: 30
+              OriginKeepaliveTimeout: 5
+          - Id: images
+            DomainName: images-internal.publitas.com
+            OriginPath: ''
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+              OriginSSLProtocols:
+                - TLSv1
+                - TLSv1.1
+                - TLSv1.2
+              OriginReadTimeout: 30
+              OriginKeepaliveTimeout: 5
+          - Id: S3-revolution-outage
+            DomainName: revolution-outage.s3-website-eu-west-1.amazonaws.com
+            OriginPath: ''
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+              OriginSSLProtocols:
+                - TLSv1
+                - TLSv1.1
+                - TLSv1.2
+              OriginReadTimeout: 30
+              OriginKeepaliveTimeout: 5
+          - Id: elb
+            DomainName: view-internal.publitas.com
+            OriginPath: ''
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+              OriginSSLProtocols:
+                - TLSv1
+                - TLSv1.1
+                - TLSv1.2
+              OriginReadTimeout: 30
+              OriginKeepaliveTimeout: 5
+        DefaultCacheBehavior:
+          TargetOriginId: elb
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: whitelist
+              WhitelistedNames:
+                - session_production_publication_*
+                - session_production_user
+                - publitas_prec
+            Headers:
+              - Host
+          ViewerProtocolPolicy: redirect-to-https
+          MinTTL: 0
+          AllowedMethods:
+            - GET
+            - HEAD
+            - DELETE
+            - POST
+            - GET
+            - OPTIONS
+            - PUT
+            - PATCH
+          CachedMethods:
+            - HEAD
+            - GET
+          SmoothStreaming: false
+          DefaultTTL: 86400
+          MaxTTL: 31536000
+          Compress: false
+        CacheBehaviors:
+          - PathPattern: '*/pages/*.jpg'
+            TargetOriginId: s3
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: /sitemap.xml
+            TargetOriginId: elb
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 900
+            MaxTTL: 900
+            Compress: false
+          - PathPattern: '*/pdfs/*.pdf'
+            TargetOriginId: s3
+            ForwardedValues:
+              QueryString: true
+              Cookies:
+                Forward: none
+              QueryStringCacheKeys:
+                - response-content-disposition
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: '*/images/*'
+            TargetOriginId: s3
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: '*/videos/*'
+            TargetOriginId: s3
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: '*/branding/*.image'
+            TargetOriginId: s3
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: '*/branding/*.ico'
+            TargetOriginId: s3
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: '*/branding/*.ttf'
+            TargetOriginId: s3
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: '*/branding/*.wof'
+            TargetOriginId: s3
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: '*/branding/*.otf'
+            TargetOriginId: s3
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: /fonts/*
+            TargetOriginId: s3
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: /5xx-errors/*
+            TargetOriginId: S3-revolution-outage
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: '*.php'
+            TargetOriginId: S3-revolution-outage
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: /custom-scripts/*
+            TargetOriginId: publitas.github.io
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: /images*
+            TargetOriginId: images
+            ForwardedValues:
+              QueryString: true
+              Cookies:
+                Forward: whitelist
+                WhitelistedNames:
+                  - session_production_publication_*
+              Headers:
+                - Host
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: '*/login'
+            TargetOriginId: elb
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: whitelist
+                WhitelistedNames:
+                  - session_production_params_*
+                  - session_production_publication_*
+                  - session_production_user
+              Headers:
+                - Host
+                - Referer
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - DELETE
+              - POST
+              - GET
+              - OPTIONS
+              - PUT
+              - PATCH
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+          - PathPattern: /screenshots
+            TargetOriginId: images
+            ForwardedValues:
+              QueryString: true
+              Cookies:
+                Forward: whitelist
+                WhitelistedNames:
+                  - session_production_publication_*
+              Headers:
+                - Host
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            AllowedMethods:
+              - HEAD
+              - GET
+            CachedMethods:
+              - HEAD
+              - GET
+            SmoothStreaming: false
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            Compress: false
+        CustomErrorResponses:
+          - ErrorCode: 400
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 403
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 405
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 414
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 416
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 500
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 501
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 502
+            ResponsePagePath: /5xx-errors/5xx.html
+            ResponseCode: 502
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 503
+            ResponsePagePath: /5xx-errors/5xx.html
+            ResponseCode: 503
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 504
+            ErrorCachingMinTTL: 0
+        Comment: !Join 
+          - ''
+          - - revolution-production-group-
+            - !Ref groupId
+            - '-ssl'
+        PriceClass: PriceClass_All
+        Enabled: true
+        ViewerCertificate:
+          AcmCertificateArn: !Ref ACMsslArn
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.1_2016
+        WebACLId: ''
+        HttpVersion: http2
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 7e77d5ab-a17a-4deb-bfd3-cb8b80fe7fdd
+Metadata:
+  'AWS::CloudFormation::Designer':
+    7e77d5ab-a17a-4deb-bfd3-cb8b80fe7fdd:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 800
+        'y': -90
+      z: 1
+      embeds: []
+    e08c1936-bab4-44cc-b97f-4f84a9b9f2c9:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 1270
+        'y': -90
+      z: 1
+      embeds: []
+Parameters:
+  groupId:
+    Type: String
+    Default: <group_id>
+  customerDomain:
+    Type: String
+    Default: <custom_domain_host_name>
+  LambdaArn:
+    Type: String
+  ACMsslArn:
+    Type: String
+    Default: <ssl_cert_arn>
+
+
