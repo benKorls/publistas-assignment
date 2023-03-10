@@ -1,4 +1,4 @@
-# publistas-assignment
+# publitas-assignment
 
 Implementation Plan:
 
